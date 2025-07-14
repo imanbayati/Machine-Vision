@@ -42,7 +42,7 @@ Internet connection (to download models)
 Installation
 
 Clone the Repository:
-git clone https://github.com/<your-username>/Machine-Vision-2.git
+git clone https://github.com/imanbayati/Machine-Vision.git
 cd Machine-Vision-2
 
 
