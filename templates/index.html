@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تشخیص ماسک و شیء</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+        }
+        
+        .alert { 
+            transition: all 0.3s ease-in-out; 
+            transform: translateY(-10px);
+        }
+        .alert-hidden { 
+            opacity: 0; 
+            transform: translateY(-20px);
+            pointer-events: none;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #ffffff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .service-card {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .service-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .service-card.active {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6;
+        }
+        
+        .checkbox-custom {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .checkbox-custom:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        .checkbox-custom:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .video-container {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .video-placeholder {
+            color: #64748b;
+            text-align: center;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+    </style>
+</head>
+<body class="min-h-screen gradient-bg">
+    <!-- Header -->
+    <div class="text-center py-8">
+        <div class="glass-effect inline-block px-8 py-4 rounded-2xl shadow-lg">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-eye text-blue-600 ml-3"></i>
+                سیستم تشخیص هوشمند
+            </h1>
+            <p class="text-gray-600">سرویس مورد نظر خود را انتخاب کنید</p>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 alert-hidden">
+    </div>
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 max-w-6xl">
+        <!-- Service Selection -->
+        <div class="grid md:grid-cols-2 gap-6 mb-8">
+            <!-- Mask Detection Card -->
+            <div class="service-card bg-white rounded-2xl shadow-lg p-6" id="maskCard">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center">
+                        <div class="bg-blue-100 p-3 rounded-full ml-4">
+                            <i class="fas fa-head-side-mask text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800">تشخیص ماسک</h3>
+                            <p class="text-gray-500 text-sm">شناسایی استفاده از ماسک</p>
+                        </div>
+                    </div>
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="maskCheckbox" value="mask" class="checkbox-custom">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Object Detection Card -->
+            <div class="service-card bg-white rounded-2xl shadow-lg p-6" id="objectCard">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center">
+                        <div class="bg-green-100 p-3 rounded-full ml-4">
+                            <i class="fas fa-cube text-green-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800">تشخیص شیء</h3>
+                            <p class="text-gray-500 text-sm">شناسایی اشیاء مختلف</p>
+                        </div>
+                    </div>
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="objectCheckbox" value="object" class="checkbox-custom">
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Streams -->
+        <div class="grid lg:grid-cols-1 gap-6">
+            <!-- Mask Detection Stream -->
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden" id="maskStreamContainer" style="display: none;">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4">
+                    <h3 class="text-white font-semibold flex items-center">
+                        <i class="fas fa-head-side-mask ml-2"></i>
+                        تشخیص ماسک
+                    </h3>
+                </div>
+                <div class="video-container">
+                    <img id="maskStream" src="/placeholder.svg" class="w-full h-auto max-h-96 object-contain" style="display: none;">
+                    <div class="video-placeholder" id="maskPlaceholder">
+                        <i class="fas fa-video text-4xl mb-4"></i>
+                        <p>در انتظار تصویر...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Object Detection Stream -->
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden" id="objectStreamContainer" style="display: none;">
+                <div class="bg-gradient-to-r from-green-500 to-green-600 p-4">
+                    <h3 class="text-white font-semibold flex items-center">
+                        <i class="fas fa-cube ml-2"></i>
+                        تشخیص شیء
+                    </h3>
+                </div>
+                <div class="video-container">
+                    <img id="objectStream" src="/placeholder.svg" class="w-full h-auto max-h-96 object-contain" style="display: none;">
+                    <div class="video-placeholder" id="objectPlaceholder">
+                        <i class="fas fa-video text-4xl mb-4"></i>
+                        <p>در انتظار تصویر...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center py-8 mt-12">
+        <p class="text-white/80 text-sm">
+            <i class="fas fa-shield-alt ml-1"></i>
+            سیستم تشخیص هوشمند - نسخه 1.0
+        </p>
+    </div>
+
+    <script>
+        const maskCheckbox = document.getElementById('maskCheckbox');
+        const objectCheckbox = document.getElementById('objectCheckbox');
+        const maskStream = document.getElementById('maskStream');
+        const objectStream = document.getElementById('objectStream');
+        const maskStreamContainer = document.getElementById('maskStreamContainer');
+        const objectStreamContainer = document.getElementById('objectStreamContainer');
+        const maskPlaceholder = document.getElementById('maskPlaceholder');
+        const objectPlaceholder = document.getElementById('objectPlaceholder');
+        const alertContainer = document.getElementById('alertContainer');
+        const maskCard = document.getElementById('maskCard');
+        const objectCard = document.getElementById('objectCard');
+
+        function showAlert(message, type, showSpinner = false) {
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500',
+                warning: 'bg-yellow-500'
+            };
+            
+            const icons = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-exclamation-circle',
+                info: 'fas fa-info-circle',
+                warning: 'fas fa-exclamation-triangle'
+            };
+
+            alertContainer.innerHTML = `
+                <div class="alert ${colors[type]} text-white px-6 py-4 rounded-xl shadow-lg flex items-center min-w-80">
+                    <i class="${icons[type]} ml-3"></i>
+                    <span class="flex-1">${message}</span>
+                    ${showSpinner ? '<div class="spinner mr-3"></div>' : ''}
+                </div>
+            `;
+            alertContainer.classList.remove('alert-hidden');
+        }
+
+        function hideAlert() {
+            alertContainer.classList.add('alert-hidden');
+        }
+
+        function updateCardStates() {
+            maskCard.classList.toggle('active', maskCheckbox.checked);
+            objectCard.classList.toggle('active', objectCheckbox.checked);
+        }
+
+        function setMode(mode) {
+            // غیرفعال کردن checkbox دیگر
+            if (mode === 'mask') {
+                objectCheckbox.checked = false;
+                objectStreamContainer.style.display = 'none';
+                objectStream.style.display = 'none';
+                objectStream.src = '';
+                objectPlaceholder.style.display = 'block';
+                maskStreamContainer.style.display = 'block';
+            } else if (mode === 'object') {
+                maskCheckbox.checked = false;
+                maskStreamContainer.style.display = 'none';
+                maskStream.style.display = 'none';
+                maskStream.src = '';
+                maskPlaceholder.style.display = 'block';
+                objectStreamContainer.style.display = 'block';
+            }
+
+            updateCardStates();
+
+            const serviceName = mode === 'mask' ? 'تشخیص ماسک' : 'تشخیص شیء';
+            showAlert(`در حال راه‌اندازی ${serviceName}...`, 'info', true);
+
+            // ارسال درخواست به سرور
+            fetch('/set_mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: mode })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const streamUrl = `/video_feed?mode=${mode}&t=${new Date().getTime()}`;
+                    if (mode === 'mask') {
+                        maskStream.src = streamUrl;
+                        maskStream.style.display = 'block';
+                        maskPlaceholder.style.display = 'none';
+                    } else {
+                        objectStream.src = streamUrl;
+                        objectStream.style.display = 'block';
+                        objectPlaceholder.style.display = 'none';
+                    }
+                    showAlert(`${serviceName} با موفقیت فعال شد`, 'success');
+                    setTimeout(hideAlert, 3000);
+                } else {
+                    showAlert(`خطا در فعال‌سازی ${serviceName}`, 'error');
+                    setTimeout(hideAlert, 4000);
+                }
+            })
+            .catch(error => {
+                showAlert(`خطا در اتصال: ${error.message}`, 'error');
+                setTimeout(hideAlert, 4000);
+            });
+        }
+
+        function stopService(mode) {
+            if (mode === 'mask') {
+                maskStreamContainer.style.display = 'none';
+                maskStream.style.display = 'none';
+                maskStream.src = '';
+            } else {
+                objectStreamContainer.style.display = 'none';
+                objectStream.style.display = 'none';
+                objectStream.src = '';
+            }
+            updateCardStates();
+        }
+
+        maskCheckbox.addEventListener('change', () => {
+            if (maskCheckbox.checked) {
+                setMode('mask');
+            } else {
+                stopService('mask');
+            }
+        });
+
+        objectCheckbox.addEventListener('change', () => {
+            if (objectCheckbox.checked) {
+                setMode('object');
+            } else {
+                stopService('object');
+            }
+        });
+
+        // Initialize card states
+        updateCardStates();
+    </script>
+</body>
+</html>

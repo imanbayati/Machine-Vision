@@ -1,0 +1,22 @@
+# Virtual environments
+env/
+
+
+# Model files
+mask_detector/mask-detector-model.model
+object_detector/ssd_mobilenet_v2_fpnlite_640x640_coco17_tpu-8/
+
+# Temporary files
+mask_detector/temp/
+*.pyc
+__pycache__/
+*.tar.gz
+*.zip
+
+# IDE and editor files
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
